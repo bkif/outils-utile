@@ -7,6 +7,7 @@ import {
   FolderOpen,
   Link as LinkIcon,
   Loader2,
+  Plus,
   Upload,
   X,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import type { AddFilesResult } from '../hooks/useConversionQueue';
 import type { PresetId } from '../types/media';
 
 interface DropZoneProps {
+  queueCount: number;
   activePresetId: PresetId | null;
   onFilesAdded: (files: FileList | File[], presetOverride?: PresetId) => AddFilesResult;
   onUrlAdded: (url: string, presetOverride?: PresetId) => Promise<void>;
@@ -52,6 +54,7 @@ function isEditableElement(target: EventTarget | null): boolean {
 }
 
 export function DropZone({
+  queueCount,
   activePresetId,
   onFilesAdded,
   onUrlAdded,
@@ -67,23 +70,28 @@ export function DropZone({
   const activePresetRef = useRef<PresetId | null>(activePresetId);
   activePresetRef.current = activePresetId;
 
-  const handleFileSelection = (files: FileList | File[] | null, sourceLabel?: string) => {
+  const isCompact = queueCount > 0;
+
+  const handleFileSelection = (
+    files: FileList | File[] | null,
+    sourceLabel?: string,
+  ) => {
     if (!files || files.length === 0) return;
     setFeedbackError(null);
     const result = onFilesAdded(files, activePresetRef.current ?? undefined);
     if (result.addedCount > 0 && sourceLabel) {
       setPasteNotice(
-        `Staged ${result.addedCount} ${result.addedCount === 1 ? 'file' : 'files'} from ${sourceLabel}.`,
+        `${result.addedCount} ${result.addedCount === 1 ? 'fichier ajouté' : 'fichiers ajoutés'} depuis ${sourceLabel}.`,
       );
     }
     if (result.rejectedNames.length > 0) {
       const preview = result.rejectedNames.slice(0, 3).join(', ');
       const suffix =
         result.rejectedNames.length > 3
-          ? ` (+${result.rejectedNames.length - 3} more)`
+          ? ` (+${result.rejectedNames.length - 3} autres)`
           : '';
       setFeedbackError(
-        `Unsupported file format skipped: ${preview}${suffix}. Supported: video, audio, and image files.`,
+        `Format non pris en charge ignoré : ${preview}${suffix}. Formats acceptés : Images, Vidéo et Audio.`,
       );
     }
   };
@@ -103,7 +111,7 @@ export function DropZone({
       const clipboardFiles = e.clipboardData?.files;
       if (clipboardFiles && clipboardFiles.length > 0) {
         e.preventDefault();
-        handleFileSelection(clipboardFiles, 'clipboard');
+        handleFileSelection(clipboardFiles, 'le presse-papiers');
         return;
       }
 
@@ -114,11 +122,13 @@ export function DropZone({
         setIsFetchingUrl(true);
         void onUrlAdded(pastedText, activePresetRef.current ?? undefined)
           .then(() => {
-            setPasteNotice('Imported direct media URL from clipboard.');
+            setPasteNotice('Média importé depuis l’URL collée.');
           })
           .catch((err) => {
             setFeedbackError(
-              err instanceof Error ? err.message : 'Unable to import pasted URL.',
+              err instanceof Error
+                ? err.message
+                : 'Impossible d’importer l’URL collée.',
             );
           })
           .finally(() => {
@@ -164,7 +174,7 @@ export function DropZone({
       setUrlOpen(false);
     } catch (err) {
       setFeedbackError(
-        err instanceof Error ? err.message : 'Unable to import media from URL.',
+        err instanceof Error ? err.message : 'Impossible d’importer le média via cette URL.',
       );
     } finally {
       setIsFetchingUrl(false);
@@ -172,43 +182,19 @@ export function DropZone({
   };
 
   return (
-    <section aria-label="Media intake bay" className="space-y-2.5">
+    <section aria-label="Zone d’importation de fichiers" className="space-y-2.5">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative flex min-h-[168px] flex-col justify-between rounded-lg border border-dashed transition-all ${
+        className={`relative rounded border transition-colors ${
           isDragging
-            ? 'border-[#f59e0b] bg-[#f59e0b]/10 shadow-[0_0_24px_-6px_rgba(245,158,11,0.45),0_0_16px_-6px_rgba(56,189,248,0.3)]'
-            : 'border-white/15 bg-[#121418] hover:border-white/25'
+            ? 'border-2 border-dashed border-[#FF5500] bg-[#FF5500]/12'
+            : isCompact
+              ? 'border-[#2A2F3A] bg-[#131519] hover:border-[#3E4554]'
+              : 'border-2 border-dashed border-[#2A2F3A] bg-[#131519] hover:border-[#4B5568]'
         }`}
       >
-        {/* Corner brackets on dragover */}
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute top-2 left-2 h-3 w-3 border-t-2 border-l-2 transition-transform duration-150 ${
-            isDragging ? 'scale-100 border-[#f59e0b]' : 'scale-75 border-white/15'
-          }`}
-        />
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute top-2 right-2 h-3 w-3 border-t-2 border-r-2 transition-transform duration-150 ${
-            isDragging ? 'scale-100 border-[#38bdf8]' : 'scale-75 border-white/15'
-          }`}
-        />
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2 transition-transform duration-150 ${
-            isDragging ? 'scale-100 border-[#38bdf8]' : 'scale-75 border-white/15'
-          }`}
-        />
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute right-2 bottom-2 h-3 w-3 border-r-2 border-b-2 transition-transform duration-150 ${
-            isDragging ? 'scale-100 border-[#f59e0b]' : 'scale-75 border-white/15'
-          }`}
-        />
-
         <input
           ref={fileInputRef}
           id="media-file-input"
@@ -222,110 +208,193 @@ export function DropZone({
           className="sr-only"
         />
 
-        {/* Primary Local Drop & Select Area */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-3.5 px-5 py-6 text-center">
-          <div
-            className={`flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
-              isDragging
-                ? 'border-[#f59e0b]/60 bg-[#f59e0b]/20 text-[#fbbf24]'
-                : 'border-white/12 bg-[#181b20] text-[#d1d5db]'
-            }`}
-          >
-            {isFetchingUrl ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#38bdf8]" aria-hidden="true" />
-            ) : (
-              <Upload className="h-5 w-5" aria-hidden="true" />
-            )}
+        {isCompact ? (
+          /* Compact Bar State (queue.length > 0) */
+          <div className="flex min-h-[58px] flex-col gap-2.5 px-3.5 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded border ${
+                  isDragging
+                    ? 'border-[#FF5500] bg-[#FF5500] text-[#0B0C0E]'
+                    : 'border-[#2A2F3A] bg-[#1B1E24] text-[#F4F6F8]'
+                }`}
+              >
+                {isFetchingUrl ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[#FF5500]" aria-hidden="true" />
+                ) : (
+                  <Upload className="h-4 w-4" aria-hidden="true" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#F4F6F8]">
+                  {isDragging
+                    ? 'Relâchez pour ajouter à la file'
+                    : 'Glisser d’autres fichiers ou coller (Ctrl+V)'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                id="browse-files-button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded border border-[#FF5500] bg-[#FF5500] px-4 py-2 text-sm font-semibold text-[#0B0C0E] transition-colors hover:bg-[#FF6B1A] active:bg-[#E04B00] sm:flex-initial"
+              >
+                <Plus className="h-4 w-4 stroke-[2.5]" aria-hidden="true" />
+                <span>Ajouter</span>
+              </button>
+
+              <button
+                type="button"
+                id="toggle-url-import-button"
+                aria-expanded={urlOpen}
+                aria-controls="direct-url-drawer"
+                onClick={() => setUrlOpen((prev) => !prev)}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded border border-[#2A2F3A] bg-[#1B1E24] px-3.5 py-2 text-sm font-semibold text-[#F4F6F8] transition-colors hover:border-[#4B5568] hover:bg-[#232730] sm:flex-initial"
+              >
+                <LinkIcon className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                <span>URL</span>
+                {urlOpen ? (
+                  <ChevronUp className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </div>
+        ) : (
+          /* Bold Tactile Empty State (queue.length === 0) */
+          <div className="relative flex min-h-[240px] flex-col items-center justify-center gap-4 px-5 py-8 text-center">
+            {/* Architectural Corner Brackets */}
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute top-3 left-3 h-4 w-4 border-t-2 border-l-2 ${
+                isDragging ? 'border-[#FF5500]' : 'border-[#4B5568]'
+              }`}
+            />
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute top-3 right-3 h-4 w-4 border-t-2 border-r-2 ${
+                isDragging ? 'border-[#FF5500]' : 'border-[#4B5568]'
+              }`}
+            />
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute bottom-3 left-3 h-4 w-4 border-b-2 border-l-2 ${
+                isDragging ? 'border-[#FF5500]' : 'border-[#4B5568]'
+              }`}
+            />
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute right-3 bottom-3 h-4 w-4 border-r-2 border-b-2 ${
+                isDragging ? 'border-[#FF5500]' : 'border-[#4B5568]'
+              }`}
+            />
 
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-[#f3f4f6]">
-              {isDragging
-                ? 'Release files to stage in processing rack'
-                : 'Drop video, audio, or image files here'}
-            </p>
-            <p className="text-xs text-[#9ca3af]">
-              or paste file / URL with{' '}
-              <kbd className="rounded border border-white/15 bg-[#181b20] px-1.5 py-0.5 font-mono text-[10px] text-[#e5e7eb]">
-                Ctrl+V
-              </kbd>
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-            <button
-              type="button"
-              id="browse-files-button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-[#f59e0b]/60 bg-[#f59e0b] px-4 py-2 text-xs font-semibold text-[#0b0c0e] transition-colors hover:bg-[#fbbf24] active:bg-[#d97706] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]"
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded border transition-colors ${
+                isDragging
+                  ? 'border-[#FF5500] bg-[#FF5500] text-[#0B0C0E]'
+                  : 'border-[#2A2F3A] bg-[#1B1E24] text-[#FF5500]'
+              }`}
             >
-              <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Select Files</span>
-            </button>
-
-            <button
-              type="button"
-              id="toggle-url-import-button"
-              aria-expanded={urlOpen}
-              aria-controls="direct-url-drawer"
-              onClick={() => setUrlOpen((prev) => !prev)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-white/14 bg-[#181b20] px-3 py-2 text-xs font-medium text-[#e5e7eb] transition-colors hover:border-white/25 hover:bg-[#1f232a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]"
-            >
-              <LinkIcon className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
-              <span>Direct URL</span>
-              {urlOpen ? (
-                <ChevronUp className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
+              {isFetchingUrl ? (
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
               ) : (
-                <ChevronDown className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
+                <Upload className="h-6 w-6" aria-hidden="true" />
               )}
-            </button>
-          </div>
-        </div>
+            </div>
 
-        {/* Separated Direct URL Intake Drawer */}
+            <div className="space-y-1.5">
+              <p className="text-base font-bold tracking-tight text-[#F4F6F8] sm:text-lg">
+                {isDragging
+                  ? 'Relâchez vos fichiers pour les préparer'
+                  : 'Glissez vos fichiers ici ou cliquez pour parcourir'}
+              </p>
+              <p className="text-sm font-semibold text-[#A3ACBA]">
+                Images · Vidéo · Audio — ou collez un fichier / URL via{' '}
+                <kbd className="rounded border border-[#2A2F3A] bg-[#0B0C0E] px-2 py-0.5 font-mono text-xs font-semibold text-[#F4F6F8]">
+                  Ctrl+V
+                </kbd>
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col items-stretch justify-center gap-2.5 pt-1 sm:w-auto sm:flex-row sm:items-center">
+              <button
+                type="button"
+                id="browse-files-button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded border border-[#FF5500] bg-[#FF5500] px-5 py-2.5 text-sm font-bold text-[#0B0C0E] transition-colors hover:bg-[#FF6B1A] active:bg-[#E04B00]"
+              >
+                <FolderOpen className="h-4 w-4" aria-hidden="true" />
+                <span>Parcourir les fichiers</span>
+              </button>
+
+              <button
+                type="button"
+                id="toggle-url-import-button"
+                aria-expanded={urlOpen}
+                aria-controls="direct-url-drawer"
+                onClick={() => setUrlOpen((prev) => !prev)}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded border border-[#2A2F3A] bg-[#1B1E24] px-4 py-2.5 text-sm font-semibold text-[#F4F6F8] transition-colors hover:border-[#4B5568] hover:bg-[#232730]"
+              >
+                <LinkIcon className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                <span>Importer une URL</span>
+                {urlOpen ? (
+                  <ChevronUp className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-[#A3ACBA]" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Separated Direct URL Drawer */}
         {urlOpen && (
           <div
             id="direct-url-drawer"
-            className="border-t border-white/10 bg-[#0e1014] px-4 py-3.5"
+            className="border-t border-[#2A2F3A] bg-[#0B0C0E] px-4 py-3.5"
           >
             <form
               onSubmit={handleUrlSubmit}
               className="flex flex-col gap-2 sm:flex-row sm:items-center"
             >
               <label htmlFor="direct-media-url-input" className="sr-only">
-                Direct public media file URL
+                URL directe d’un fichier média public
               </label>
               <input
                 id="direct-media-url-input"
                 type="url"
                 value={urlValue}
                 onChange={(e) => setUrlValue(e.target.value)}
-                placeholder="https://example.com/sample-clip.mp4"
+                placeholder="https://exemple.com/clip-video.mp4"
                 required
                 disabled={isFetchingUrl}
-                className="w-full flex-1 rounded-md border border-white/14 bg-[#121418] px-3 py-2 font-mono text-xs text-[#f3f4f6] placeholder-[#9ca3af]/70 transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-[40px] w-full flex-1 rounded border border-[#2A2F3A] bg-[#131519] px-3 py-2 font-mono text-sm font-medium text-[#F4F6F8] placeholder-[#A3ACBA] transition-colors hover:border-[#4B5568] disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="submit"
                 id="fetch-url-button"
                 disabled={isFetchingUrl || !urlValue.trim()}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-white/14 bg-[#181b20] px-3.5 py-2 text-xs font-semibold text-[#f3f4f6] transition-colors hover:border-[#f59e0b]/60 hover:text-[#fbbf24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-[40px] shrink-0 items-center justify-center gap-2 rounded border border-[#2A2F3A] bg-[#1B1E24] px-4 py-2 text-sm font-semibold text-[#F4F6F8] transition-colors hover:border-[#FF5500] hover:text-[#FF5500] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingUrl ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#38bdf8]" aria-hidden="true" />
-                    <span>Fetching...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-[#FF5500]" aria-hidden="true" />
+                    <span>Importation...</span>
                   </>
                 ) : (
-                  <span>Import URL</span>
+                  <span>Importer l’URL</span>
                 )}
               </button>
             </form>
-            <p className="mt-2 text-[11px] leading-relaxed text-[#9ca3af]">
-              Direct public media file links only (<code className="font-mono text-[#e5e7eb]">.mp4</code>,{' '}
-              <code className="font-mono text-[#e5e7eb]">.mp3</code>,{' '}
-              <code className="font-mono text-[#e5e7eb]">.png</code>,{' '}
-              <code className="font-mono text-[#e5e7eb]">.webp</code>). Browser CORS applies; streaming pages like YouTube are unsupported client-side.
+            <p className="mt-2 text-xs leading-relaxed text-[#A3ACBA]">
+              Liens directs vers un fichier média public uniquement (<code className="font-mono text-[#F4F6F8]">.mp4</code>,{' '}
+              <code className="font-mono text-[#F4F6F8]">.mp3</code>,{' '}
+              <code className="font-mono text-[#F4F6F8]">.png</code>,{' '}
+              <code className="font-mono text-[#F4F6F8]">.webp</code>). La politique CORS du serveur s’applique ; les plateformes de streaming (YouTube, etc.) ne sont pas prises en charge côté client.
             </p>
           </div>
         )}
@@ -335,9 +404,9 @@ export function DropZone({
         <div
           role="status"
           aria-live="polite"
-          className="flex items-center gap-2 rounded-md border border-[#10b981]/35 bg-[#10b981]/10 px-3 py-2 text-xs text-[#34d399]"
+          className="flex items-center gap-2 rounded border border-[#10B981]/50 bg-[#131519] px-3.5 py-2.5 text-sm font-semibold text-[#34D399]"
         >
-          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{pasteNotice}</span>
         </div>
       )}
@@ -345,19 +414,19 @@ export function DropZone({
       {feedbackError && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-md border border-[#ef4444]/40 bg-[#ef4444]/10 px-3.5 py-2.5 text-xs text-[#fca5a5]"
+          className="flex items-start justify-between gap-3 rounded border border-[#EF4444]/60 bg-[#131519] px-3.5 py-2.5 text-sm font-semibold text-[#FCA5A5]"
         >
           <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ef4444]" aria-hidden="true" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#EF4444]" aria-hidden="true" />
             <span>{feedbackError}</span>
           </div>
           <button
             type="button"
             onClick={() => setFeedbackError(null)}
-            aria-label="Dismiss import error"
-            className="rounded p-0.5 text-[#fca5a5] hover:bg-[#ef4444]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80"
+            aria-label="Fermer le message d’erreur"
+            className="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded text-[#FCA5A5] hover:bg-[#EF4444]/20"
           >
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       )}

@@ -1,108 +1,118 @@
 import { Cpu, ShieldCheck } from 'lucide-react';
-import type { EngineStatus } from '../types/media';
+import type { EngineStatus, QueueItem } from '../types/media';
+import { formatBytesFr } from '../utils/formatters';
 
 interface HeaderProps {
   engineStatus: EngineStatus;
+  items: readonly QueueItem[];
 }
 
-export function Header({ engineStatus }: HeaderProps) {
-  const { state, progress, message, errorDetail } = engineStatus;
+function getFrenchEngineLabel(status: EngineStatus): string {
+  switch (status.state) {
+    case 'standby':
+      return 'WASM · Veille';
+    case 'loading':
+      return status.progress > 0
+        ? `WASM · Chargement (${status.progress}%)`
+        : 'WASM · Chargement';
+    case 'ready':
+      return 'WASM · Prêt';
+    case 'busy':
+      return 'WASM · Actif';
+    case 'error':
+      return 'WASM · Erreur';
+  }
+}
 
-  const isProcessingOrLoading = state === 'loading' || state === 'busy';
+export function Header({ engineStatus, items }: HeaderProps) {
+  const { state, errorDetail } = engineStatus;
 
-  const ledColorClass =
+  const totalSize = items.reduce((sum, item) => sum + item.size, 0);
+  const fileCountLabel = `${items.length} ${items.length <= 1 ? 'fichier' : 'fichiers'}`;
+  const engineLabel = getFrenchEngineLabel(engineStatus);
+
+  const ledClass =
     state === 'ready'
-      ? 'bg-[#10b981]'
-      : isProcessingOrLoading
-        ? 'bg-[#38bdf8] animate-pulse'
+      ? 'bg-[#10B981]'
+      : state === 'loading' || state === 'busy'
+        ? 'bg-[#FF5500] animate-pulse'
         : state === 'error'
-          ? 'bg-[#ef4444]'
-          : 'bg-[#9ca3af]';
+          ? 'bg-[#EF4444]'
+          : 'bg-[#A3ACBA]';
 
-  const statusTextClass =
+  const textClass =
     state === 'ready'
-      ? 'text-[#10b981]'
-      : isProcessingOrLoading
-        ? 'text-[#38bdf8]'
+      ? 'text-[#34D399]'
+      : state === 'loading' || state === 'busy'
+        ? 'text-[#FF5500]'
         : state === 'error'
-          ? 'text-[#ef4444]'
-          : 'text-[#d1d5db]';
-
-  const displayLabel =
-    state === 'standby'
-      ? 'Standby'
-      : state === 'loading' && progress > 0 && !message.includes('%')
-        ? `${message} (${progress}%)`
-        : message;
+          ? 'text-[#FCA5A5]'
+          : 'text-[#F4F6F8]';
 
   return (
-    <header className="border-b border-white/10 bg-[#0b0c0e]/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[1360px] flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <header className="border-b border-[#2A2F3A] bg-[#131519]">
+      <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:min-h-[60px] sm:px-6 sm:py-2.5">
         <div className="flex items-center gap-3">
-          {/* Geometric anvil & waveform-prism studio mark */}
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-[#121418] shadow-inner">
+          {/* Swiss Industrial Rack SVG Brand Mark */}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded border border-[#2A2F3A] bg-[#0B0C0E]">
             <svg
-              width="28"
-              height="28"
-              viewBox="0 0 28 28"
+              width="24"
+              height="24"
+              viewBox="0 0 32 32"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              <path
-                d="M10.5 6.5V9M14 5V9M17.5 6.5V9"
-                stroke="#38bdf8"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <path
-                d="M5.5 11H22.5L19.6 15.5H8.4L5.5 11Z"
-                fill="#f59e0b"
-              />
-              <path
-                d="M9 17.5H19V19.6H9V17.5ZM7 21.2H21V23H7V21.2Z"
-                fill="#e5e7eb"
-              />
+              <path d="M5 7h22v5H5V7Z" fill="#FF5500" />
+              <path d="M5 15h13v4H5v-4Zm0 6h22v4H5v-4Z" fill="#F4F6F8" />
+              <rect x="21" y="15" width="6" height="4" fill="#FF5500" />
             </svg>
           </div>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-semibold tracking-tight text-[#f3f4f6]">
-                FORGE
-              </h1>
-              <span className="rounded border border-white/12 bg-[#181b20] px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-[#d1d5db]">
-                v1.0
-              </span>
-            </div>
-            <p className="text-xs text-[#9ca3af]">
-              Studio video, audio &amp; image workstation
-            </p>
+          <div className="flex flex-wrap items-baseline gap-2.5">
+            <h1 className="text-lg font-extrabold tracking-[-0.025em] text-[#F4F6F8] sm:text-xl">
+              Outils Utiles
+            </h1>
+            <span className="hidden font-mono text-xs font-semibold uppercase tracking-wider text-[#A3ACBA] md:inline">
+              Studio Média Local
+            </span>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#10b981]/30 bg-[#10b981]/10 px-2.5 py-1.5 font-mono text-[11px] font-medium tracking-wide text-[#34d399]"
-            title="All decoding, transcoding, and ZIP packaging execute strictly inside your browser RAM. No files are ever uploaded."
-          >
-            <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>100% LOCAL · ZERO UPLOAD</span>
-          </div>
-
+          {/* Live Queue Telemetry */}
           <div
             role="status"
             aria-live="polite"
-            className="inline-flex items-center gap-2 rounded-md border border-white/12 bg-[#121418] px-2.5 py-1.5"
-            title={errorDetail ?? `FFmpeg.wasm engine state: ${displayLabel}`}
+            className="inline-flex min-h-[36px] items-center gap-2 rounded border border-[#2A2F3A] bg-[#0B0C0E] px-3 py-1.5 font-mono text-xs font-semibold tabular-nums text-[#F4F6F8]"
           >
-            <Cpu className="h-3.5 w-3.5 shrink-0 text-[#9ca3af]" aria-hidden="true" />
-            <span className="font-mono text-[11px] text-[#9ca3af]">WASM ·</span>
-            <span className={`h-2 w-2 shrink-0 rounded-full ${ledColorClass}`} />
-            <span
-              className={`font-mono text-[11px] font-medium tabular-nums ${statusTextClass}`}
-            >
-              {displayLabel}
+            <span>{fileCountLabel}</span>
+            <span aria-hidden="true" className="text-[#A3ACBA]">
+              ·
+            </span>
+            <span className="text-[#A3ACBA]">{formatBytesFr(totalSize)}</span>
+          </div>
+
+          {/* 100% Local Privacy Pill */}
+          <div
+            className="inline-flex min-h-[36px] items-center gap-1.5 rounded border border-[#10B981]/40 bg-[#0B0C0E] px-3 py-1.5 font-mono text-xs font-semibold tracking-wide text-[#34D399]"
+            title="Tout le décodage, le transcodage FFmpeg.wasm/Canvas et l'export ZIP s'exécutent dans la RAM de votre navigateur."
+          >
+            <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>100% LOCAL • ZÉRO UPLOAD</span>
+          </div>
+
+          {/* Live Engine Telemetry */}
+          <div
+            role="status"
+            aria-live="polite"
+            title={errorDetail ?? `État du moteur FFmpeg.wasm : ${engineLabel}`}
+            className="hidden min-h-[36px] items-center gap-2 rounded border border-[#2A2F3A] bg-[#0B0C0E] px-3 py-1.5 sm:inline-flex"
+          >
+            <Cpu className="h-4 w-4 shrink-0 text-[#A3ACBA]" aria-hidden="true" />
+            <span className={`h-2 w-2 shrink-0 rounded-full ${ledClass}`} />
+            <span className={`font-mono text-xs font-semibold tabular-nums ${textClass}`}>
+              {engineLabel}
             </span>
           </div>
         </div>

@@ -24,7 +24,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'mp4',
     mimeType: 'video/mp4',
     category: 'video',
-    description: 'Universal H.264/AAC video container',
+    description: 'Conteneur vidéo universel H.264 / AAC',
   },
   webm: {
     id: 'webm',
@@ -32,7 +32,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'webm',
     mimeType: 'video/webm',
     category: 'video',
-    description: 'Open web video container (VP8/VP9 + Vorbis/Opus)',
+    description: 'Conteneur web ouvert (VP8/VP9 + Vorbis)',
   },
   mov: {
     id: 'mov',
@@ -40,7 +40,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'mov',
     mimeType: 'video/quicktime',
     category: 'video',
-    description: 'Apple QuickTime video container',
+    description: 'Conteneur vidéo Apple QuickTime',
   },
   mkv: {
     id: 'mkv',
@@ -48,7 +48,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'mkv',
     mimeType: 'video/x-matroska',
     category: 'video',
-    description: 'Matroska flexible multimedia container',
+    description: 'Conteneur multimédia flexible Matroska',
   },
   avi: {
     id: 'avi',
@@ -56,7 +56,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'avi',
     mimeType: 'video/x-msvideo',
     category: 'video',
-    description: 'Legacy Windows Audio Video Interleave container',
+    description: 'Conteneur classique Audio Video Interleave',
   },
   gif: {
     id: 'gif',
@@ -64,7 +64,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'gif',
     mimeType: 'image/gif',
     category: 'video',
-    description: 'Palette-optimized animated GIF loop',
+    description: 'GIF animé optimisé par palette Lanczos',
   },
 
   // Audio
@@ -74,7 +74,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'mp3',
     mimeType: 'audio/mpeg',
     category: 'audio',
-    description: 'Universal lossy MPEG-1 Audio Layer III',
+    description: 'Audio compressé universel MPEG-1 Layer III',
   },
   wav: {
     id: 'wav',
@@ -82,7 +82,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'wav',
     mimeType: 'audio/wav',
     category: 'audio',
-    description: 'Uncompressed lossless PCM audio',
+    description: 'Audio PCM non compressé sans perte',
   },
   ogg: {
     id: 'ogg',
@@ -90,7 +90,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'ogg',
     mimeType: 'audio/ogg',
     category: 'audio',
-    description: 'Ogg Vorbis open lossy audio',
+    description: 'Audio ouvert Ogg Vorbis haute efficacité',
   },
   aac: {
     id: 'aac',
@@ -98,7 +98,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'aac',
     mimeType: 'audio/aac',
     category: 'audio',
-    description: 'Advanced Audio Coding (high efficiency)',
+    description: 'Advanced Audio Coding (haute efficacité)',
   },
   flac: {
     id: 'flac',
@@ -106,7 +106,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'flac',
     mimeType: 'audio/flac',
     category: 'audio',
-    description: 'Free Lossless Audio Codec',
+    description: 'Codec audio sans perte Free Lossless',
   },
 
   // Image
@@ -116,7 +116,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'png',
     mimeType: 'image/png',
     category: 'image',
-    description: 'Lossless raster image with alpha transparency',
+    description: 'Image matricielle sans perte avec transparence alpha',
   },
   jpg: {
     id: 'jpg',
@@ -124,7 +124,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'jpg',
     mimeType: 'image/jpeg',
     category: 'image',
-    description: 'Compact lossy photographic JPEG',
+    description: 'JPEG photographique compact',
   },
   webp: {
     id: 'webp',
@@ -132,7 +132,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'webp',
     mimeType: 'image/webp',
     category: 'image',
-    description: 'Modern web raster format with alpha & high compression',
+    description: 'Format web moderne avec transparence et forte compression',
   },
   avif: {
     id: 'avif',
@@ -140,7 +140,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'avif',
     mimeType: 'image/avif',
     category: 'image',
-    description: 'Next-gen AV1 image format (browser encode dependent)',
+    description: 'Format AV1 nouvelle génération (selon support navigateur)',
   },
   ico: {
     id: 'ico',
@@ -148,7 +148,7 @@ export const FORMAT_REGISTRY: Record<SupportedFormat, FormatMeta> = {
     extension: 'ico',
     mimeType: 'image/x-icon',
     category: 'image',
-    description: 'Multi-resolution Windows icon (16×16, 32×32, 48×48)',
+    description: 'Icône Windows multi-résolution (16×16, 32×32, 48×48)',
   },
 };
 
@@ -305,10 +305,10 @@ export function getDefaultSettings(): ConversionSettings {
 export const PRESETS: Record<PresetId, PresetDefinition> = {
   'discord-10mb': {
     id: 'discord-10mb',
-    label: 'Compress < 10 MB (Discord)',
-    shortLabel: 'Discord < 10 MB',
-    targetBadge: 'MP4 · <10MB',
-    description: 'Auto-calculated 2-pass bitrate target for Discord uploads',
+    label: 'Compression Discord (< 10 Mo)',
+    shortLabel: 'Discord < 10 Mo',
+    targetBadge: 'MP4 · <10 Mo',
+    description: 'Débit 2-passes calibré automatiquement pour Discord',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'mp4',
     settingsPatch: {
@@ -320,10 +320,10 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
   },
   'extract-mp3-320': {
     id: 'extract-mp3-320',
-    label: 'Extract MP3 (320 kbps)',
+    label: 'Audio MP3 320k',
     shortLabel: 'MP3 320 kbps',
     targetBadge: 'MP3 · 320k',
-    description: 'High-bitrate stereo MP3 audio extraction from any video',
+    description: 'Extraction audio MP3 stéréo haute fidélité depuis toute vidéo',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'mp3',
     settingsPatch: {
@@ -335,10 +335,10 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
   },
   'smooth-gif': {
     id: 'smooth-gif',
-    label: 'Video → Smooth GIF',
-    shortLabel: 'Smooth GIF',
+    label: 'Vidéo → GIF Fluide',
+    shortLabel: 'GIF Fluide',
     targetBadge: 'GIF · 15fps',
-    description: 'Two-pass palettegen Lanczos GIF at 15 FPS',
+    description: 'Palette 2-passes Lanczos à 15 images/seconde',
     compatibleCategories: ['video', 'image'],
     targetFormat: 'gif',
     settingsPatch: {
@@ -351,10 +351,10 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
   },
   'web-webp': {
     id: 'web-webp',
-    label: 'Optimize Image (WebP)',
-    shortLabel: 'Optimize WebP',
+    label: 'Web Ultra-Léger (WebP)',
+    shortLabel: 'WebP 82%',
     targetBadge: 'WEBP · 82%',
-    description: 'Hardware-accelerated Canvas WebP export at 82% quality',
+    description: 'Export Canvas WebP à 82% de qualité sans métadonnées EXIF',
     compatibleCategories: ['image'],
     targetFormat: 'webp',
     settingsPatch: {
@@ -366,10 +366,10 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
   },
   'fast-remux': {
     id: 'fast-remux',
-    label: 'Fast Remux (No Re-encode)',
-    shortLabel: 'Fast Remux',
-    targetBadge: 'MP4 · COPY',
-    description: 'Instant lossless stream copy (-c copy) into MP4 container',
+    label: 'Remux Rapide (MP4)',
+    shortLabel: 'Remux MP4',
+    targetBadge: 'MP4 · COPIE',
+    description: 'Copie directe des flux (-c copy) sans ré-encodage',
     compatibleCategories: ['video'],
     targetFormat: 'mp4',
     settingsPatch: {
@@ -380,10 +380,10 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
   },
   'lossless-wav': {
     id: 'lossless-wav',
-    label: 'Lossless WAV',
-    shortLabel: 'Lossless WAV',
+    label: 'Lossless WAV PCM',
+    shortLabel: 'WAV PCM',
     targetBadge: 'WAV · PCM',
-    description: 'Uncompressed 16-bit PCM stereo audio extraction',
+    description: 'Extraction audio stéréo PCM 16-bit non compressée',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'wav',
     settingsPatch: {

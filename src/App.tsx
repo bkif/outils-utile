@@ -29,54 +29,70 @@ export function App() {
   const [activePresetId, setActivePresetId] = useState<PresetId | null>(null);
 
   return (
-    <div className="studio-canvas min-h-screen text-[#f3f4f6]">
-      <Header engineStatus={engineStatus} />
+    <div className="industrial-grid min-h-screen text-[#F4F6F8]">
+      <Header engineStatus={engineStatus} items={items} />
 
-      <main className="mx-auto max-w-[1360px] px-4 py-6 sm:px-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
-        {/* Left Control Column */}
-        <div className="space-y-5 lg:col-span-5">
-          <DropZone
-            activePresetId={activePresetId}
-            onFilesAdded={addFiles}
-            onUrlAdded={addUrl}
-          />
+      <main className="mx-auto max-w-[1360px] space-y-5 px-4 py-5 sm:px-6 sm:py-6">
+        {/* Adaptive Two-State DropZone: Bold 240px bay when empty, compact 58px bar when queued */}
+        <DropZone
+          queueCount={items.length}
+          activePresetId={activePresetId}
+          onFilesAdded={addFiles}
+          onUrlAdded={addUrl}
+        />
 
-          <PresetBar
-            items={items}
-            activePresetId={activePresetId}
-            onSelectActivePreset={setActivePresetId}
-            onApplyPreset={applyPreset}
-            onFilesAddedWithPreset={(files, presetId) => addFiles(files, presetId)}
-          />
+        {/* Workstation Grid: Queue sits first on mobile when active for instant above-the-fold controls */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start lg:gap-6">
+          <div
+            className={`${
+              items.length > 0 ? 'order-1' : 'order-2'
+            } lg:order-2 lg:col-span-8`}
+          >
+            <QueueList
+              items={items}
+              isProcessing={isProcessing}
+              onTargetFormatChange={updateTargetFormat}
+              onSettingsChange={updateSettings}
+              onGlobalTargetChange={applyGlobalTargetFormat}
+              onConvertAll={convertAll}
+              onConvertItem={convertItem}
+              onCancelItem={cancelItem}
+              onRemoveItem={removeItem}
+              onClearCompleted={clearCompleted}
+              onClearAll={clearAll}
+            />
+          </div>
 
-          <FormatMatrix />
-        </div>
+          <aside
+            aria-label="Workflows et matrice des formats"
+            className={`${
+              items.length > 0 ? 'order-2' : 'order-1'
+            } space-y-5 lg:order-1 lg:col-span-4`}
+          >
+            <PresetBar
+              items={items}
+              activePresetId={activePresetId}
+              onSelectActivePreset={setActivePresetId}
+              onApplyPreset={applyPreset}
+              onFilesAddedWithPreset={(files, presetId) => addFiles(files, presetId)}
+            />
 
-        {/* Right Processing Rack */}
-        <div className="mt-6 lg:col-span-7 lg:mt-0">
-          <QueueList
-            items={items}
-            isProcessing={isProcessing}
-            onTargetFormatChange={updateTargetFormat}
-            onSettingsChange={updateSettings}
-            onGlobalTargetChange={applyGlobalTargetFormat}
-            onConvertAll={convertAll}
-            onConvertItem={convertItem}
-            onCancelItem={cancelItem}
-            onRemoveItem={removeItem}
-            onClearCompleted={clearCompleted}
-            onClearAll={clearAll}
-          />
+            <FormatMatrix
+              items={items}
+              isProcessing={isProcessing}
+              onSelectTargetFormat={applyGlobalTargetFormat}
+            />
+          </aside>
         </div>
       </main>
 
-      <footer className="mt-12 border-t border-white/10 pt-6 pb-8">
-        <div className="mx-auto flex max-w-[1360px] flex-col gap-2 px-4 text-xs text-[#9ca3af] sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <p className="font-mono">
-            Local browser execution via WebAssembly &amp; Canvas · Recommended max ~200 MB per file
+      <footer className="mt-10 border-t border-[#2A2F3A] bg-[#131519] py-5">
+        <div className="mx-auto flex max-w-[1360px] flex-col gap-2 px-4 font-mono text-xs font-semibold text-[#A3ACBA] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p>
+            Exécution locale par WebAssembly &amp; Canvas API · Maximum recommandé ~200 Mo par fichier
           </p>
-          <p className="font-mono text-[#9ca3af]">
-            FORGE v1.0 · Zero telemetry · Zero server uploads
+          <p className="text-[#F4F6F8]">
+            Outils Utiles · Zéro télémétrie · Zéro upload
           </p>
         </div>
       </footer>
