@@ -65,22 +65,25 @@ export function PresetBar({
         );
         pickerRef.current.click();
       }
-      setFeedback(`Armed "${preset.shortLabel}" — pick compatible media files.`);
+      setFeedback(`Prêt : « ${preset.shortLabel} » — choisissez vos fichiers.`);
       return;
     }
 
     const result = onApplyPreset(presetId);
     if (result.appliedCount === 0) {
-      setFeedback(`No compatible idle items in queue for "${preset.shortLabel}".`);
+      setFeedback(`Aucun fichier compatible dans la file pour « ${preset.shortLabel} ».`);
     } else {
       setFeedback(
-        `Applied "${preset.shortLabel}" to ${result.appliedCount} item${result.appliedCount > 1 ? 's' : ''}.`,
+        `« ${preset.shortLabel} » appliqué à ${result.appliedCount} ${result.appliedCount > 1 ? 'fichiers' : 'fichier'}.`,
       );
     }
   };
 
   return (
-    <section aria-label="Quick workflow presets" className="studio-panel rounded-lg p-4 space-y-3">
+    <section
+      aria-label="Préréglages rapides"
+      className="rack-panel space-y-3 rounded p-4"
+    >
       <input
         ref={pickerRef}
         type="file"
@@ -92,10 +95,10 @@ export function PresetBar({
             const result = onFilesAddedWithPreset(chosenFiles, targetPreset);
             if (result.addedCount > 0) {
               setFeedback(
-                `Staged ${result.addedCount} item${result.addedCount > 1 ? 's' : ''} with ${PRESETS[targetPreset].shortLabel}.`,
+                `${result.addedCount} ${result.addedCount > 1 ? 'fichiers ajoutés' : 'fichier ajouté'} avec « ${PRESETS[targetPreset].shortLabel} ».`,
               );
             } else if (result.rejectedNames.length > 0) {
-              setFeedback('Selected files were not compatible with this media pipeline.');
+              setFeedback('Les fichiers choisis sont incompatibles avec ce préréglage.');
             }
           }
           e.target.value = '';
@@ -104,19 +107,20 @@ export function PresetBar({
       />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#d1d5db]">
-          Quick Presets
+        <h2 className="text-sm font-bold tracking-[-0.025em] text-[#F4F6F8] uppercase">
+          Workflows Rapides
         </h2>
         <p
-          className="font-mono text-[11px] text-[#fbbf24]"
+          className="font-mono text-xs font-semibold text-[#FF5500]"
           role="status"
           aria-live="polite"
         >
-          {feedback ?? (activePresetId ? `Armed: ${PRESETS[activePresetId].shortLabel}` : '')}
+          {feedback ??
+            (activePresetId ? `Actif : ${PRESETS[activePresetId].shortLabel}` : '')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
         {PRESET_LIST.map((preset) => {
           const Icon = PRESET_ICONS[preset.id];
           const compatibleCount = items.filter(
@@ -139,42 +143,42 @@ export function PresetBar({
               id={`preset-${preset.id}`}
               aria-pressed={isSelected}
               onClick={() => handleSelect(preset.id)}
-              className={`group flex flex-col justify-between gap-2 rounded-md border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e] ${
+              className={`group flex min-h-[48px] flex-col justify-between gap-1.5 rounded border p-3 text-left transition-colors ${
                 isSelected
-                  ? 'border-[#f59e0b]/70 bg-[#f59e0b]/12'
+                  ? 'border-[#FF5500] bg-[#FF5500]/12'
                   : isDimmed
-                    ? 'border-white/8 bg-[#181b20]/50 opacity-60 hover:opacity-90'
-                    : 'border-white/10 bg-[#181b20] hover:border-white/20 hover:bg-[#1e2229] active:bg-[#15181e]'
+                    ? 'border-[#2A2F3A] bg-[#1B1E24]/50 opacity-50 hover:opacity-85'
+                    : 'border-[#2A2F3A] bg-[#1B1E24] hover:border-[#4B5568] hover:bg-[#22262E]'
               }`}
             >
-              <div className="flex w-full items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${
+              <div className="flex w-full items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded border ${
                       isSelected
-                        ? 'border-[#f59e0b]/50 bg-[#f59e0b]/20 text-[#fbbf24]'
-                        : 'border-white/10 bg-[#121418] text-[#9ca3af] group-hover:text-[#f3f4f6]'
+                        ? 'border-[#FF5500] bg-[#FF5500] text-[#0B0C0E]'
+                        : 'border-[#2A2F3A] bg-[#131519] text-[#F4F6F8] group-hover:border-[#4B5568]'
                     }`}
                   >
-                    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-xs font-semibold leading-snug text-[#f3f4f6]">
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-semibold text-[#F4F6F8]">
                     {preset.label}
                   </span>
                 </div>
 
                 <span
-                  className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium tabular-nums ${
+                  className={`shrink-0 rounded border px-2 py-0.5 font-mono text-xs font-semibold tabular-nums ${
                     isSelected
-                      ? 'border-[#f59e0b]/50 bg-[#f59e0b]/20 text-[#fbbf24]'
-                      : 'border-white/10 bg-[#0b0c0e] text-[#9ca3af]'
+                      ? 'border-[#FF5500] bg-[#FF5500] text-[#0B0C0E]'
+                      : 'border-[#2A2F3A] bg-[#0B0C0E] text-[#A3ACBA]'
                   }`}
                 >
                   {preset.targetBadge}
                 </span>
               </div>
 
-              <p className="text-[11px] leading-relaxed text-[#9ca3af]">
+              <p className="text-xs leading-relaxed text-[#A3ACBA]">
                 {preset.description}
               </p>
             </button>
