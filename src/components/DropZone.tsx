@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   FolderOpen,
@@ -10,10 +11,12 @@ import {
   X,
 } from 'lucide-react';
 import type { AddFilesResult } from '../hooks/useConversionQueue';
+import type { PresetId } from '../types/media';
 
 interface DropZoneProps {
-  onFilesAdded: (files: FileList | File[]) => AddFilesResult;
-  onUrlAdded: (url: string) => Promise<void>;
+  activePresetId: PresetId | null;
+  onFilesAdded: (files: FileList | File[], presetOverride?: PresetId) => AddFilesResult;
+  onUrlAdded: (url: string, presetOverride?: PresetId) => Promise<void>;
 }
 
 const ACCEPTED_FILE_TYPES = [
@@ -37,18 +40,42 @@ const ACCEPTED_FILE_TYPES = [
   '.svg',
 ].join(',');
 
-export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
+function isEditableElement(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName.toLowerCase();
+  return (
+    tag === 'input' ||
+    tag === 'textarea' ||
+    tag === 'select' ||
+    target.isContentEditable
+  );
+}
+
+export function DropZone({
+  activePresetId,
+  onFilesAdded,
+  onUrlAdded,
+}: DropZoneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [urlOpen, setUrlOpen] = useState(false);
   const [urlValue, setUrlValue] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [pasteNotice, setPasteNotice] = useState<string | null>(null);
 
-  const handleFileSelection = (files: FileList | null) => {
+  const activePresetRef = useRef<PresetId | null>(activePresetId);
+  activePresetRef.current = activePresetId;
+
+  const handleFileSelection = (files: FileList | File[] | null, sourceLabel?: string) => {
     if (!files || files.length === 0) return;
     setFeedbackError(null);
-    const result = onFilesAdded(files);
+    const result = onFilesAdded(files, activePresetRef.current ?? undefined);
+    if (result.addedCount > 0 && sourceLabel) {
+      setPasteNotice(
+        `Staged ${result.addedCount} ${result.addedCount === 1 ? 'file' : 'files'} from ${sourceLabel}.`,
+      );
+    }
     if (result.rejectedNames.length > 0) {
       const preview = result.rejectedNames.slice(0, 3).join(', ');
       const suffix =
@@ -60,6 +87,49 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
       );
     }
   };
+
+  useEffect(() => {
+    if (!pasteNotice) return;
+    const timer = window.setTimeout(() => setPasteNotice(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [pasteNotice]);
+
+  useEffect(() => {
+    const handleWindowPaste = (e: ClipboardEvent) => {
+      if (isEditableElement(e.target) || isEditableElement(document.activeElement)) {
+        return;
+      }
+
+      const clipboardFiles = e.clipboardData?.files;
+      if (clipboardFiles && clipboardFiles.length > 0) {
+        e.preventDefault();
+        handleFileSelection(clipboardFiles, 'clipboard');
+        return;
+      }
+
+      const pastedText = e.clipboardData?.getData('text/plain')?.trim() ?? '';
+      if (/^https?:\/\/\S+/i.test(pastedText)) {
+        e.preventDefault();
+        setFeedbackError(null);
+        setIsFetchingUrl(true);
+        void onUrlAdded(pastedText, activePresetRef.current ?? undefined)
+          .then(() => {
+            setPasteNotice('Imported direct media URL from clipboard.');
+          })
+          .catch((err) => {
+            setFeedbackError(
+              err instanceof Error ? err.message : 'Unable to import pasted URL.',
+            );
+          })
+          .finally(() => {
+            setIsFetchingUrl(false);
+          });
+      }
+    };
+
+    window.addEventListener('paste', handleWindowPaste);
+    return () => window.removeEventListener('paste', handleWindowPaste);
+  }, [onUrlAdded, onFilesAdded]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -89,7 +159,7 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
     setFeedbackError(null);
     setIsFetchingUrl(true);
     try {
-      await onUrlAdded(trimmed);
+      await onUrlAdded(trimmed, activePresetId ?? undefined);
       setUrlValue('');
       setUrlOpen(false);
     } catch (err) {
@@ -102,17 +172,43 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
   };
 
   return (
-    <section aria-label="Media ingestion" className="space-y-3">
+    <section aria-label="Media intake bay" className="space-y-2.5">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative rounded-lg border border-dashed transition-colors ${
+        className={`relative flex min-h-[168px] flex-col justify-between rounded-lg border border-dashed transition-all ${
           isDragging
-            ? 'border-[#F59E0B] bg-[#F59E0B]/10'
-            : 'border-[#262B36] bg-[#12151B] hover:border-[#3A4252]'
+            ? 'border-[#f59e0b] bg-[#f59e0b]/10 shadow-[0_0_24px_-6px_rgba(245,158,11,0.45),0_0_16px_-6px_rgba(56,189,248,0.3)]'
+            : 'border-white/15 bg-[#121418] hover:border-white/25'
         }`}
       >
+        {/* Corner brackets on dragover */}
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute top-2 left-2 h-3 w-3 border-t-2 border-l-2 transition-transform duration-150 ${
+            isDragging ? 'scale-100 border-[#f59e0b]' : 'scale-75 border-white/15'
+          }`}
+        />
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute top-2 right-2 h-3 w-3 border-t-2 border-r-2 transition-transform duration-150 ${
+            isDragging ? 'scale-100 border-[#38bdf8]' : 'scale-75 border-white/15'
+          }`}
+        />
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2 transition-transform duration-150 ${
+            isDragging ? 'scale-100 border-[#38bdf8]' : 'scale-75 border-white/15'
+          }`}
+        />
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none absolute right-2 bottom-2 h-3 w-3 border-r-2 border-b-2 transition-transform duration-150 ${
+            isDragging ? 'scale-100 border-[#f59e0b]' : 'scale-75 border-white/15'
+          }`}
+        />
+
         <input
           ref={fileInputRef}
           id="media-file-input"
@@ -126,35 +222,42 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
           className="sr-only"
         />
 
-        <div className="flex flex-col items-center justify-between gap-4 p-5 sm:flex-row sm:p-6">
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border ${
-                isDragging
-                  ? 'border-[#F59E0B]/60 bg-[#F59E0B]/20 text-[#F59E0B]'
-                  : 'border-[#262B36] bg-[#191D26] text-[#9CA3AF]'
-              }`}
-            >
+        {/* Primary Local Drop & Select Area */}
+        <div className="flex flex-1 flex-col items-center justify-center gap-3.5 px-5 py-6 text-center">
+          <div
+            className={`flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
+              isDragging
+                ? 'border-[#f59e0b]/60 bg-[#f59e0b]/20 text-[#fbbf24]'
+                : 'border-white/12 bg-[#181b20] text-[#d1d5db]'
+            }`}
+          >
+            {isFetchingUrl ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[#38bdf8]" aria-hidden="true" />
+            ) : (
               <Upload className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[#F3F4F6]">
-                {isDragging
-                  ? 'Release files to stage in conversion rack'
-                  : 'Drop video, audio, or image files here'}
-              </p>
-              <p className="mt-0.5 font-mono text-xs text-[#9CA3AF]">
-                MP4, WebM, MOV, MKV, AVI, GIF • MP3, WAV, OGG, AAC, FLAC • PNG, JPG, WebP, AVIF, ICO
-              </p>
-            </div>
+            )}
           </div>
 
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-[#f3f4f6]">
+              {isDragging
+                ? 'Release files to stage in processing rack'
+                : 'Drop video, audio, or image files here'}
+            </p>
+            <p className="text-xs text-[#9ca3af]">
+              or paste file / URL with{' '}
+              <kbd className="rounded border border-white/15 bg-[#181b20] px-1.5 py-0.5 font-mono text-[10px] text-[#e5e7eb]">
+                Ctrl+V
+              </kbd>
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
             <button
               type="button"
               id="browse-files-button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#F59E0B]/50 bg-[#F59E0B] px-4 py-2 text-xs font-semibold text-[#0B0D10] transition-colors hover:bg-[#FBBF24] active:bg-[#D97706] sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-[#f59e0b]/60 bg-[#f59e0b] px-4 py-2 text-xs font-semibold text-[#0b0c0e] transition-colors hover:bg-[#fbbf24] active:bg-[#d97706] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]"
             >
               <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Select Files</span>
@@ -164,22 +267,27 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
               type="button"
               id="toggle-url-import-button"
               aria-expanded={urlOpen}
+              aria-controls="direct-url-drawer"
               onClick={() => setUrlOpen((prev) => !prev)}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#262B36] bg-[#191D26] px-3 py-2 text-xs font-medium text-[#F3F4F6] transition-colors hover:border-[#3A4252] hover:bg-[#202632] active:bg-[#151921] sm:w-auto"
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-white/14 bg-[#181b20] px-3 py-2 text-xs font-medium text-[#e5e7eb] transition-colors hover:border-white/25 hover:bg-[#1f232a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]"
             >
-              <LinkIcon className="h-3.5 w-3.5 text-[#9CA3AF]" aria-hidden="true" />
+              <LinkIcon className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
               <span>Direct URL</span>
               {urlOpen ? (
-                <ChevronUp className="h-3.5 w-3.5 text-[#9CA3AF]" aria-hidden="true" />
+                <ChevronUp className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
               ) : (
-                <ChevronDown className="h-3.5 w-3.5 text-[#9CA3AF]" aria-hidden="true" />
+                <ChevronDown className="h-3.5 w-3.5 text-[#9ca3af]" aria-hidden="true" />
               )}
             </button>
           </div>
         </div>
 
+        {/* Separated Direct URL Intake Drawer */}
         {urlOpen && (
-          <div className="border-t border-[#262B36] bg-[#0E1116] px-5 py-4 sm:px-6">
+          <div
+            id="direct-url-drawer"
+            className="border-t border-white/10 bg-[#0e1014] px-4 py-3.5"
+          >
             <form
               onSubmit={handleUrlSubmit}
               className="flex flex-col gap-2 sm:flex-row sm:items-center"
@@ -195,17 +303,17 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
                 placeholder="https://example.com/sample-clip.mp4"
                 required
                 disabled={isFetchingUrl}
-                className="w-full flex-1 rounded-md border border-[#262B36] bg-[#12151B] px-3 py-2 font-mono text-xs text-[#F3F4F6] placeholder-[#6B7280] transition-colors hover:border-[#3A4252] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full flex-1 rounded-md border border-white/14 bg-[#121418] px-3 py-2 font-mono text-xs text-[#f3f4f6] placeholder-[#9ca3af]/70 transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <button
                 type="submit"
                 id="fetch-url-button"
                 disabled={isFetchingUrl || !urlValue.trim()}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-[#262B36] bg-[#191D26] px-4 py-2 text-xs font-semibold text-[#F3F4F6] transition-colors hover:border-[#F59E0B]/50 hover:bg-[#202632] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-white/14 bg-[#181b20] px-3.5 py-2 text-xs font-semibold text-[#f3f4f6] transition-colors hover:border-[#f59e0b]/60 hover:text-[#fbbf24] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isFetchingUrl ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#F59E0B]" aria-hidden="true" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#38bdf8]" aria-hidden="true" />
                     <span>Fetching...</span>
                   </>
                 ) : (
@@ -213,30 +321,41 @@ export function DropZone({ onFilesAdded, onUrlAdded }: DropZoneProps) {
                 )}
               </button>
             </form>
-            <p className="mt-2 text-[11px] leading-relaxed text-[#9CA3AF]">
-              Link directly to a public media file (<code className="font-mono text-[#F3F4F6]">.mp4</code>,{' '}
-              <code className="font-mono text-[#F3F4F6]">.mp3</code>,{' '}
-              <code className="font-mono text-[#F3F4F6]">.png</code>,{' '}
-              <code className="font-mono text-[#F3F4F6]">.webp</code>). Standard browser CORS headers apply—streaming pages like YouTube or TikTok are unsupported client-side.
+            <p className="mt-2 text-[11px] leading-relaxed text-[#9ca3af]">
+              Direct public media file links only (<code className="font-mono text-[#e5e7eb]">.mp4</code>,{' '}
+              <code className="font-mono text-[#e5e7eb]">.mp3</code>,{' '}
+              <code className="font-mono text-[#e5e7eb]">.png</code>,{' '}
+              <code className="font-mono text-[#e5e7eb]">.webp</code>). Browser CORS applies; streaming pages like YouTube are unsupported client-side.
             </p>
           </div>
         )}
       </div>
 
+      {pasteNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 rounded-md border border-[#10b981]/35 bg-[#10b981]/10 px-3 py-2 text-xs text-[#34d399]"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{pasteNotice}</span>
+        </div>
+      )}
+
       {feedbackError && (
         <div
           role="alert"
-          className="flex items-start justify-between gap-3 rounded-md border border-[#EF4444]/40 bg-[#EF4444]/10 px-3.5 py-2.5 text-xs text-[#FCA5A5]"
+          className="flex items-start justify-between gap-3 rounded-md border border-[#ef4444]/40 bg-[#ef4444]/10 px-3.5 py-2.5 text-xs text-[#fca5a5]"
         >
           <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" aria-hidden="true" />
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ef4444]" aria-hidden="true" />
             <span>{feedbackError}</span>
           </div>
           <button
             type="button"
             onClick={() => setFeedbackError(null)}
             aria-label="Dismiss import error"
-            className="rounded p-0.5 text-[#FCA5A5] hover:bg-[#EF4444]/20"
+            className="rounded p-0.5 text-[#fca5a5] hover:bg-[#ef4444]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

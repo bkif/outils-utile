@@ -38,6 +38,9 @@ interface QueueItemCardProps {
   onRemove: (id: string) => void;
 }
 
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]';
+
 export function QueueItemCard({
   item,
   onTargetFormatChange,
@@ -70,8 +73,7 @@ export function QueueItemCard({
   };
 
   const isGifTarget = item.targetFormat === 'gif';
-  const isImageTarget =
-    item.category === 'image' && !isGifTarget;
+  const isImageTarget = item.category === 'image' && !isGifTarget;
   const isAudioTarget = (AUDIO_FORMATS as readonly string[]).includes(item.targetFormat);
   const isVideoTarget =
     (VIDEO_FORMATS as readonly string[]).includes(item.targetFormat) && !isGifTarget;
@@ -81,18 +83,18 @@ export function QueueItemCard({
       aria-label={`Queue item ${item.name}`}
       className={`rounded-lg border transition-colors ${
         item.status === 'error'
-          ? 'border-[#EF4444]/50 bg-[#12151B]'
+          ? 'border-[#ef4444]/50 bg-[#121418]'
           : item.status === 'completed'
-            ? 'border-[#10B981]/35 bg-[#12151B]'
+            ? 'border-[#10b981]/40 bg-[#121418]'
             : item.status === 'converting'
-              ? 'border-[#F59E0B]/50 bg-[#12151B]'
-              : 'border-[#262B36] bg-[#12151B]'
+              ? 'border-[#38bdf8]/50 bg-[#121418]'
+              : 'border-white/10 bg-[#121418]'
       }`}
     >
-      <div className="flex flex-col gap-3 p-3.5 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 p-3.5 sm:p-4 xl:flex-row xl:items-center xl:justify-between">
         {/* Left: Thumbnail/icon + file identity + size telemetry */}
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#262B36] bg-[#0B0D10]">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-[#0b0c0e]">
             {item.thumbnailUrl ? (
               <img
                 src={item.thumbnailUrl}
@@ -100,52 +102,52 @@ export function QueueItemCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <CategoryIcon className="h-5 w-5 text-[#9CA3AF]" aria-hidden="true" />
+              <CategoryIcon className="h-5 w-5 text-[#9ca3af]" aria-hidden="true" />
             )}
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3
-                className="truncate text-sm font-medium text-[#F3F4F6]"
+                className="truncate text-sm font-medium text-[#f3f4f6]"
                 title={item.name}
               >
                 {item.name}
               </h3>
 
               {item.settings.activePreset && (
-                <span className="rounded border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-[#F59E0B]">
+                <span className="rounded border border-[#f59e0b]/45 bg-[#f59e0b]/12 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide text-[#fbbf24]">
                   {item.settings.activePreset}
                 </span>
               )}
             </div>
 
-            <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-xs tabular-nums text-[#9CA3AF]">
-              <span className="uppercase">{item.sourceFormat}</span>
-              <span aria-hidden="true" className="text-[#4B5563]">
-                •
+            <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-xs tabular-nums text-[#9ca3af]">
+              <span className="uppercase text-[#d1d5db]">{item.sourceFormat}</span>
+              <span aria-hidden="true" className="text-[#6b7280]">
+                ·
               </span>
               <span>{formatBytes(item.size)}</span>
 
               {item.status === 'completed' && item.outputSize !== null && (
                 <>
-                  <span aria-hidden="true" className="text-[#4B5563]">
+                  <span aria-hidden="true" className="text-[#6b7280]">
                     →
                   </span>
-                  <span className="font-semibold text-[#F3F4F6]">
+                  <span className="font-semibold text-[#f3f4f6]">
                     {formatBytes(item.outputSize)}
                   </span>
                   {sizeDelta !== null && (
                     <span
                       className={
-                        sizeDelta <= 0 ? 'text-[#10B981]' : 'text-[#F59E0B]'
+                        sizeDelta <= 0 ? 'text-[#34d399]' : 'text-[#fbbf24]'
                       }
                     >
                       ({sizeDelta > 0 ? `+${sizeDelta}%` : `${sizeDelta}%`})
                     </span>
                   )}
                   {item.durationMs !== null && (
-                    <span className="text-[#6B7280]">
+                    <span className="text-[#9ca3af]">
                       in {formatDurationMs(item.durationMs)}
                     </span>
                   )}
@@ -153,25 +155,31 @@ export function QueueItemCard({
               )}
 
               {item.status === 'queued' && (
-                <span className="text-[#9CA3AF]">• Queued</span>
+                <span className="text-[#d1d5db]">· Queued</span>
               )}
               {item.status === 'converting' && (
-                <span className="text-[#F59E0B]">• {item.progress}%</span>
+                <span className="text-[#38bdf8]">· Processing {item.progress}%</span>
+              )}
+              {item.status === 'completed' && (
+                <span className="text-[#34d399]">· Done</span>
+              )}
+              {item.status === 'error' && (
+                <span className="text-[#fca5a5]">· Error</span>
               )}
               {item.status === 'cancelled' && (
-                <span className="text-[#9CA3AF]">• Cancelled</span>
+                <span className="text-[#9ca3af]">· Cancelled</span>
               )}
             </div>
           </div>
         </div>
 
         {/* Right: Format routing + hardware controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2 xl:justify-end">
           <div className="flex items-center gap-1.5">
-            <span className="rounded border border-[#262B36] bg-[#0B0D10] px-2 py-1.5 font-mono text-xs uppercase text-[#9CA3AF]">
+            <span className="rounded border border-white/10 bg-[#0b0c0e] px-2 py-1.5 font-mono text-xs uppercase text-[#9ca3af]">
               {item.sourceFormat}
             </span>
-            <span className="font-mono text-xs text-[#6B7280]" aria-hidden="true">
+            <span className="font-mono text-xs text-[#9ca3af]" aria-hidden="true">
               →
             </span>
             <label htmlFor={`target-format-${item.id}`} className="sr-only">
@@ -184,7 +192,7 @@ export function QueueItemCard({
               onChange={(e) =>
                 onTargetFormatChange(item.id, e.target.value as SupportedFormat)
               }
-              className="rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs font-medium uppercase text-[#F3F4F6] transition-colors hover:border-[#3A4252] disabled:cursor-not-allowed disabled:opacity-50"
+              className={`rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs font-medium uppercase text-[#f3f4f6] transition-colors hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
             >
               {item.category === 'video' ? (
                 <>
@@ -224,10 +232,10 @@ export function QueueItemCard({
               aria-label={`Toggle settings for ${item.name}`}
               disabled={isLocked}
               onClick={() => setDrawerOpen((prev) => !prev)}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING} ${
                 drawerOpen
-                  ? 'border-[#F59E0B]/60 bg-[#F59E0B]/15 text-[#F59E0B]'
-                  : 'border-[#262B36] bg-[#191D26] text-[#9CA3AF] hover:border-[#3A4252] hover:text-[#F3F4F6]'
+                  ? 'border-[#f59e0b]/60 bg-[#f59e0b]/15 text-[#fbbf24]'
+                  : 'border-white/12 bg-[#181b20] text-[#9ca3af] hover:border-white/25 hover:text-[#f3f4f6]'
               }`}
               title="Fine-tune quality, resolution, and bitrate"
             >
@@ -238,11 +246,11 @@ export function QueueItemCard({
               <button
                 type="button"
                 onClick={() => onCancel(item.id)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#EF4444]/50 bg-[#EF4444]/15 px-2.5 text-xs font-medium text-[#FCA5A5] transition-colors hover:bg-[#EF4444]/25"
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md border border-[#ef4444]/50 bg-[#ef4444]/15 px-2.5 text-xs font-medium text-[#fca5a5] transition-colors hover:bg-[#ef4444]/25 ${FOCUS_RING}`}
                 title={item.status === 'queued' ? 'Unqueue item' : 'Cancel active job'}
               >
                 {item.status === 'converting' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#F59E0B]" aria-hidden="true" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#38bdf8]" aria-hidden="true" />
                 ) : (
                   <Square className="h-3 w-3 fill-current" aria-hidden="true" />
                 )}
@@ -252,7 +260,7 @@ export function QueueItemCard({
               <button
                 type="button"
                 onClick={handleDownload}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#10B981]/50 bg-[#10B981] px-3 text-xs font-semibold text-[#0B0D10] transition-colors hover:bg-[#34D399] active:bg-[#059669]"
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md border border-[#10b981]/50 bg-[#10b981] px-3 text-xs font-semibold text-[#0b0c0e] transition-colors hover:bg-[#34d399] active:bg-[#059669] ${FOCUS_RING}`}
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Download</span>
@@ -261,7 +269,7 @@ export function QueueItemCard({
               <button
                 type="button"
                 onClick={() => onConvert(item.id)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#F59E0B]/50 bg-[#F59E0B]/15 px-2.5 text-xs font-medium text-[#F59E0B] transition-colors hover:bg-[#F59E0B]/25"
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md border border-[#f59e0b]/50 bg-[#f59e0b]/15 px-2.5 text-xs font-medium text-[#fbbf24] transition-colors hover:bg-[#f59e0b]/25 ${FOCUS_RING}`}
               >
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Retry</span>
@@ -270,7 +278,7 @@ export function QueueItemCard({
               <button
                 type="button"
                 onClick={() => onConvert(item.id)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#262B36] bg-[#191D26] px-2.5 text-xs font-medium text-[#F3F4F6] transition-colors hover:border-[#F59E0B]/50 hover:text-[#F59E0B]"
+                className={`inline-flex h-8 items-center gap-1.5 rounded-md border border-white/14 bg-[#181b20] px-2.5 text-xs font-medium text-[#f3f4f6] transition-colors hover:border-[#f59e0b]/60 hover:text-[#fbbf24] ${FOCUS_RING}`}
                 title="Convert this file now"
               >
                 <Play className="h-3 w-3 fill-current" aria-hidden="true" />
@@ -283,7 +291,7 @@ export function QueueItemCard({
               onClick={() => onRemove(item.id)}
               aria-label={`Remove ${item.name}`}
               title="Remove from queue"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#262B36] bg-[#191D26] text-[#9CA3AF] transition-colors hover:border-[#EF4444]/40 hover:bg-[#EF4444]/10 hover:text-[#FCA5A5]"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/12 bg-[#181b20] text-[#9ca3af] transition-colors hover:border-[#ef4444]/40 hover:bg-[#ef4444]/10 hover:text-[#fca5a5] ${FOCUS_RING}`}
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
@@ -296,14 +304,14 @@ export function QueueItemCard({
         item.status === 'completed' ||
         item.status === 'error') && (
         <div className="px-3.5 pb-3 sm:px-4">
-          <div className="h-1 w-full overflow-hidden rounded-full bg-[#0B0D10]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#0b0c0e]">
             <div
               className={`h-full transition-all duration-200 ${
                 item.status === 'completed'
-                  ? 'bg-[#10B981]'
+                  ? 'bg-[#10b981]'
                   : item.status === 'error'
-                    ? 'bg-[#EF4444]'
-                    : 'bg-[#F59E0B]'
+                    ? 'bg-[#ef4444]'
+                    : 'bg-[#38bdf8]'
               }`}
               style={{
                 width: `${
@@ -321,8 +329,8 @@ export function QueueItemCard({
 
       {/* Warnings & Errors */}
       {item.warningMessage && (
-        <div className="mx-3.5 mb-3 flex items-start gap-2 rounded border border-[#F59E0B]/30 bg-[#F59E0B]/10 px-2.5 py-1.5 text-[11px] text-[#FDE68A] sm:mx-4">
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#F59E0B]" aria-hidden="true" />
+        <div className="mx-3.5 mb-3 flex items-start gap-2 rounded border border-[#f59e0b]/35 bg-[#f59e0b]/10 px-2.5 py-1.5 text-[11px] text-[#fde68a] sm:mx-4">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#f59e0b]" aria-hidden="true" />
           <span>{item.warningMessage}</span>
         </div>
       )}
@@ -330,43 +338,43 @@ export function QueueItemCard({
       {item.status === 'error' && item.errorMessage && (
         <div
           role="alert"
-          className="mx-3.5 mb-3 flex items-start gap-2 rounded border border-[#EF4444]/40 bg-[#EF4444]/10 px-2.5 py-1.5 text-[11px] text-[#FCA5A5] sm:mx-4"
+          className="mx-3.5 mb-3 flex items-start gap-2 rounded border border-[#ef4444]/40 bg-[#ef4444]/10 px-2.5 py-1.5 text-[11px] text-[#fca5a5] sm:mx-4"
         >
-          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" aria-hidden="true" />
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ef4444]" aria-hidden="true" />
           <span className="break-words">{item.errorMessage}</span>
         </div>
       )}
 
       {item.status === 'completed' && (
-        <div className="mx-3.5 mb-3 flex items-center justify-between gap-2 text-[11px] text-[#10B981] sm:mx-4">
+        <div className="mx-3.5 mb-3 flex items-center justify-between gap-2 text-[11px] text-[#34d399] sm:mx-4">
           <span className="inline-flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>
-              Ready: <span className="font-mono">{buildOutputFileName(item.name, item.targetFormat)}</span>
+              Ready:{' '}
+              <span className="font-mono">
+                {buildOutputFileName(item.name, item.targetFormat)}
+              </span>
             </span>
           </span>
           {(IMAGE_FORMATS as readonly string[]).includes(item.targetFormat) && (
-            <span className="font-mono text-[10px] text-[#9CA3AF]">EXIF stripped</span>
+            <span className="font-mono text-[10px] text-[#9ca3af]">EXIF stripped</span>
           )}
         </div>
       )}
 
       {/* Expandable Fine-Tuning Drawer */}
       {drawerOpen && (
-        <div className="border-t border-[#262B36] bg-[#0E1116] px-3.5 py-3.5 sm:px-4">
+        <div className="border-t border-white/10 bg-[#0e1014] px-3.5 py-3.5 sm:px-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {isImageTarget && (
               <>
                 {item.targetFormat !== 'ico' && item.targetFormat !== 'png' && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <label
-                        htmlFor={`quality-${item.id}`}
-                        className="text-[#9CA3AF]"
-                      >
+                      <label htmlFor={`quality-${item.id}`} className="text-[#9ca3af]">
                         Compression Quality
                       </label>
-                      <span className="font-mono tabular-nums text-[#F3F4F6]">
+                      <span className="font-mono tabular-nums text-[#f3f4f6]">
                         {Math.round(item.settings.quality * 100)}%
                       </span>
                     </div>
@@ -382,7 +390,7 @@ export function QueueItemCard({
                           quality: Number(e.target.value),
                         })
                       }
-                      className="forge-slider w-full"
+                      className={`forge-slider w-full ${FOCUS_RING}`}
                     />
                   </div>
                 )}
@@ -392,7 +400,7 @@ export function QueueItemCard({
                     <div className="space-y-1.5">
                       <label
                         htmlFor={`max-width-${item.id}`}
-                        className="block text-xs text-[#9CA3AF]"
+                        className="block text-xs text-[#9ca3af]"
                       >
                         Max Width (px)
                       </label>
@@ -404,7 +412,7 @@ export function QueueItemCard({
                             maxWidth: e.target.value ? Number(e.target.value) : null,
                           })
                         }
-                        className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6]"
+                        className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] ${FOCUS_RING}`}
                       >
                         <option value="">Original width</option>
                         <option value="2560">2560 px (QHD)</option>
@@ -418,7 +426,7 @@ export function QueueItemCard({
                     <div className="space-y-1.5">
                       <label
                         htmlFor={`max-height-${item.id}`}
-                        className="block text-xs text-[#9CA3AF]"
+                        className="block text-xs text-[#9ca3af]"
                       >
                         Max Height (px)
                       </label>
@@ -430,7 +438,7 @@ export function QueueItemCard({
                             maxHeight: e.target.value ? Number(e.target.value) : null,
                           })
                         }
-                        className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6]"
+                        className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] ${FOCUS_RING}`}
                       >
                         <option value="">Original height</option>
                         <option value="1440">1440 px</option>
@@ -444,8 +452,9 @@ export function QueueItemCard({
                 )}
 
                 {item.targetFormat === 'ico' && (
-                  <p className="text-xs text-[#9CA3AF] sm:col-span-2">
-                    Generates a multi-resolution <code className="font-mono text-[#F3F4F6]">.ico</code> container embedding crisp 16×16, 32×32, and 48×48 PNG frames.
+                  <p className="text-xs text-[#9ca3af] sm:col-span-2">
+                    Generates a multi-resolution{' '}
+                    <code className="font-mono text-[#f3f4f6]">.ico</code> container embedding crisp 16×16, 32×32, and 48×48 PNG frames.
                   </p>
                 )}
               </>
@@ -455,10 +464,10 @@ export function QueueItemCard({
               <>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <label htmlFor={`gif-fps-${item.id}`} className="text-[#9CA3AF]">
+                    <label htmlFor={`gif-fps-${item.id}`} className="text-[#9ca3af]">
                       GIF Frame Rate
                     </label>
-                    <span className="font-mono tabular-nums text-[#F3F4F6]">
+                    <span className="font-mono tabular-nums text-[#f3f4f6]">
                       {item.settings.gifFps} FPS
                     </span>
                   </div>
@@ -472,14 +481,14 @@ export function QueueItemCard({
                     onChange={(e) =>
                       onSettingsChange(item.id, { gifFps: Number(e.target.value) })
                     }
-                    className="forge-slider w-full"
+                    className={`forge-slider w-full ${FOCUS_RING}`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`gif-width-${item.id}`}
-                    className="block text-xs text-[#9CA3AF]"
+                    className="block text-xs text-[#9ca3af]"
                   >
                     GIF Width (Lanczos Scale)
                   </label>
@@ -489,7 +498,7 @@ export function QueueItemCard({
                     onChange={(e) =>
                       onSettingsChange(item.id, { gifWidth: Number(e.target.value) })
                     }
-                    className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6]"
+                    className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] ${FOCUS_RING}`}
                   >
                     <option value="320">320 px (Compact)</option>
                     <option value="480">480 px (Standard)</option>
@@ -504,10 +513,10 @@ export function QueueItemCard({
               <>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <label htmlFor={`crf-${item.id}`} className="text-[#9CA3AF]">
+                    <label htmlFor={`crf-${item.id}`} className="text-[#9ca3af]">
                       Quality (CRF)
                     </label>
-                    <span className="font-mono tabular-nums text-[#F3F4F6]">
+                    <span className="font-mono tabular-nums text-[#f3f4f6]">
                       CRF {item.settings.crf}
                     </span>
                   </div>
@@ -525,9 +534,9 @@ export function QueueItemCard({
                         targetSizeMb: null,
                       })
                     }
-                    className="forge-slider w-full disabled:opacity-40"
+                    className={`forge-slider w-full disabled:opacity-40 ${FOCUS_RING}`}
                   />
-                  <div className="flex justify-between font-mono text-[10px] text-[#6B7280]">
+                  <div className="flex justify-between font-mono text-[10px] text-[#9ca3af]">
                     <span>18 (Higher)</span>
                     <span>32 (Smaller)</span>
                   </div>
@@ -536,7 +545,7 @@ export function QueueItemCard({
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`vid-width-${item.id}`}
-                    className="block text-xs text-[#9CA3AF]"
+                    className="block text-xs text-[#9ca3af]"
                   >
                     Resolution Scale
                   </label>
@@ -549,7 +558,7 @@ export function QueueItemCard({
                         maxWidth: e.target.value ? Number(e.target.value) : null,
                       })
                     }
-                    className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6] disabled:opacity-40"
+                    className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] disabled:opacity-40 ${FOCUS_RING}`}
                   >
                     <option value="">Original resolution</option>
                     <option value="1920">1080p max (1920w)</option>
@@ -563,7 +572,7 @@ export function QueueItemCard({
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`vid-audio-${item.id}`}
-                      className="block text-xs text-[#9CA3AF]"
+                      className="block text-xs text-[#9ca3af]"
                     >
                       Audio Bitrate
                     </label>
@@ -576,7 +585,7 @@ export function QueueItemCard({
                           audioBitrate: e.target.value as ConversionSettings['audioBitrate'],
                         })
                       }
-                      className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6] disabled:opacity-40"
+                      className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] disabled:opacity-40 ${FOCUS_RING}`}
                     >
                       <option value="96k">96 kbps</option>
                       <option value="128k">128 kbps</option>
@@ -586,7 +595,7 @@ export function QueueItemCard({
                     </select>
                   </div>
 
-                  <label className="flex cursor-pointer items-center gap-2 text-xs text-[#F3F4F6]">
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-[#f3f4f6]">
                     <input
                       type="checkbox"
                       checked={item.settings.fastRemux}
@@ -596,7 +605,7 @@ export function QueueItemCard({
                           targetSizeMb: null,
                         })
                       }
-                      className="h-3.5 w-3.5 rounded border-[#262B36] bg-[#191D26] accent-[#F59E0B]"
+                      className={`h-3.5 w-3.5 rounded border-white/20 bg-[#181b20] accent-[#f59e0b] ${FOCUS_RING}`}
                     />
                     <span>Fast Remux (-c copy, no re-encode)</span>
                   </label>
@@ -608,12 +617,12 @@ export function QueueItemCard({
               <div className="space-y-1.5">
                 <label
                   htmlFor={`audio-bitrate-${item.id}`}
-                  className="block text-xs text-[#9CA3AF]"
+                  className="block text-xs text-[#9ca3af]"
                 >
                   Audio Bitrate
                 </label>
                 {item.targetFormat === 'wav' || item.targetFormat === 'flac' ? (
-                  <p className="rounded-md border border-[#262B36] bg-[#12151B] px-2.5 py-1.5 font-mono text-xs text-[#9CA3AF]">
+                  <p className="rounded-md border border-white/10 bg-[#121418] px-2.5 py-1.5 font-mono text-xs text-[#9ca3af]">
                     Lossless PCM / FLAC (no bitrate cap)
                   </p>
                 ) : (
@@ -625,7 +634,7 @@ export function QueueItemCard({
                         audioBitrate: e.target.value as ConversionSettings['audioBitrate'],
                       })
                     }
-                    className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6]"
+                    className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] ${FOCUS_RING}`}
                   >
                     <option value="96k">96 kbps (Compact)</option>
                     <option value="128k">128 kbps (Standard)</option>

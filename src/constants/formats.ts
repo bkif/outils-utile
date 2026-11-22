@@ -307,7 +307,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'discord-10mb',
     label: 'Compress < 10 MB (Discord)',
     shortLabel: 'Discord < 10 MB',
-    description: 'Auto-calculates video & audio bitrate to fit reliably under 9.5 MB',
+    targetBadge: 'MP4 · <10MB',
+    description: 'Auto-calculated 2-pass bitrate target for Discord uploads',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'mp4',
     settingsPatch: {
@@ -321,7 +322,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'extract-mp3-320',
     label: 'Extract MP3 (320 kbps)',
     shortLabel: 'MP3 320 kbps',
-    description: 'High-bitrate stereo MP3 extraction from video or audio',
+    targetBadge: 'MP3 · 320k',
+    description: 'High-bitrate stereo MP3 audio extraction from any video',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'mp3',
     settingsPatch: {
@@ -335,7 +337,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'smooth-gif',
     label: 'Video → Smooth GIF',
     shortLabel: 'Smooth GIF',
-    description: 'Two-pass palettegen Lanczos GIF at 15 FPS / 480px width',
+    targetBadge: 'GIF · 15fps',
+    description: 'Two-pass palettegen Lanczos GIF at 15 FPS',
     compatibleCategories: ['video', 'image'],
     targetFormat: 'gif',
     settingsPatch: {
@@ -350,7 +353,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'web-webp',
     label: 'Optimize Image (WebP)',
     shortLabel: 'Optimize WebP',
-    description: 'Canvas-accelerated WebP at 82% quality with EXIF stripped',
+    targetBadge: 'WEBP · 82%',
+    description: 'Hardware-accelerated Canvas WebP export at 82% quality',
     compatibleCategories: ['image'],
     targetFormat: 'webp',
     settingsPatch: {
@@ -364,7 +368,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'fast-remux',
     label: 'Fast Remux (No Re-encode)',
     shortLabel: 'Fast Remux',
-    description: 'Instant stream copy (-c copy) to MP4 with automatic transcode fallback',
+    targetBadge: 'MP4 · COPY',
+    description: 'Instant lossless stream copy (-c copy) into MP4 container',
     compatibleCategories: ['video'],
     targetFormat: 'mp4',
     settingsPatch: {
@@ -377,7 +382,8 @@ export const PRESETS: Record<PresetId, PresetDefinition> = {
     id: 'lossless-wav',
     label: 'Lossless WAV',
     shortLabel: 'Lossless WAV',
-    description: 'Uncompressed 16-bit PCM audio extraction',
+    targetBadge: 'WAV · PCM',
+    description: 'Uncompressed 16-bit PCM stereo audio extraction',
     compatibleCategories: ['video', 'audio'],
     targetFormat: 'wav',
     settingsPatch: {
