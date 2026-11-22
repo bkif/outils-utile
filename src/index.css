@@ -5,9 +5,20 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+:root {
+  --bg-canvas: #0b0c0e;
+  --bg-panel: #121418;
+  --bg-elevated: #181b20;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --accent-amber: #f59e0b;
+  --accent-emerald: #10b981;
+  --accent-sky: #38bdf8;
+}
+
 @layer base {
   html {
-    background-color: #0b0d10;
+    background-color: var(--bg-canvas);
     color: #f3f4f6;
     font-family: var(--font-sans);
     color-scheme: dark;
@@ -15,36 +26,51 @@
 
   body {
     margin: 0;
-    min-height: 100vh;
-    background-color: #0b0d10;
+    background-color: var(--bg-canvas);
     color: #f3f4f6;
     overflow-x: hidden;
   }
 
-  /* Custom industrial scrollbar */
+  /* Custom studio scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #0b0d10;
+    background: var(--bg-canvas);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #262b36;
+    background: rgba(255, 255, 255, 0.14);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #363d4d;
+    background: rgba(255, 255, 255, 0.24);
   }
 
-  /* Consistent high-contrast focus ring */
+  /* Consistent WCAG AA high-contrast focus ring */
   :focus-visible {
-    outline: 2px solid #f59e0b;
+    outline: 2px solid rgba(251, 191, 36, 0.85);
     outline-offset: 2px;
   }
+}
+
+.studio-canvas {
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.studio-panel {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+}
+
+.studio-elevated {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
 }
 
 /* Tactile range input styling */
@@ -52,8 +78,8 @@ input[type="range"].forge-slider {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
-  background: #0b0d10;
-  border: 1px solid #262b36;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-strong);
   border-radius: 9999px;
   cursor: pointer;
 }
@@ -64,7 +90,7 @@ input[type="range"].forge-slider::-webkit-slider-thumb {
   width: 14px;
   height: 14px;
   border-radius: 3px;
-  background: #f59e0b;
+  background: var(--accent-amber);
   border: 1px solid #fbbf24;
   cursor: pointer;
   transition: transform 0.1s ease, background-color 0.15s ease;
@@ -79,7 +105,7 @@ input[type="range"].forge-slider::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 3px;
-  background: #f59e0b;
+  background: var(--accent-amber);
   border: 1px solid #fbbf24;
   cursor: pointer;
 }

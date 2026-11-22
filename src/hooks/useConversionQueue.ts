@@ -83,64 +83,81 @@ export function useConversionQueue() {
     [],
   );
 
-  const addFiles = useCallback((fileList: FileList | File[]): AddFilesResult => {
-    const incoming = Array.from(fileList);
-    const newItems: QueueItem[] = [];
-    const rejectedNames: string[] = [];
+  const addFiles = useCallback(
+    (fileList: FileList | File[], presetOverride?: PresetId): AddFilesResult => {
+      const incoming = Array.from(fileList);
+      const newItems: QueueItem[] = [];
+      const rejectedNames: string[] = [];
+      const preset = presetOverride ? PRESETS[presetOverride] : null;
 
-    for (const file of incoming) {
-      const { category, sourceFormat } = detectMediaInfo(file);
-      if (!category) {
-        rejectedNames.push(file.name);
-        continue;
+      for (const file of incoming) {
+        const { category, sourceFormat } = detectMediaInfo(file);
+        if (!category) {
+          rejectedNames.push(file.name);
+          continue;
+        }
+
+        const applyPresetOnIntake =
+          preset !== null && preset.compatibleCategories.includes(category);
+
+        const targetFormat = applyPresetOnIntake
+          ? preset.targetFormat
+          : getDefaultTargetFormat(category, sourceFormat);
+
+        const settings: ConversionSettings = applyPresetOnIntake
+          ? {
+              ...getDefaultSettings(),
+              ...preset.settingsPatch,
+            }
+          : getDefaultSettings();
+
+        const thumbnailUrl =
+          category === 'image' && file.size < 30 * 1024 * 1024
+            ? URL.createObjectURL(file)
+            : null;
+
+        const warningMessage =
+          file.size > LARGE_FILE_WARNING_BYTES
+            ? 'Large file (> 200 MB). Browser RAM limits may affect WASM transcoding.'
+            : null;
+
+        newItems.push({
+          id: createItemId(),
+          file,
+          name: file.name,
+          size: file.size,
+          category,
+          sourceFormat,
+          targetFormat,
+          settings,
+          status: 'idle',
+          progress: 0,
+          outputBlob: null,
+          outputUrl: null,
+          outputSize: null,
+          durationMs: null,
+          errorMessage: null,
+          warningMessage,
+          thumbnailUrl,
+        });
       }
 
-      const targetFormat = getDefaultTargetFormat(category, sourceFormat);
-      const thumbnailUrl =
-        category === 'image' && file.size < 30 * 1024 * 1024
-          ? URL.createObjectURL(file)
-          : null;
+      if (newItems.length > 0) {
+        setItems((prev) => [...prev, ...newItems]);
+      }
 
-      const warningMessage =
-        file.size > LARGE_FILE_WARNING_BYTES
-          ? 'Large file (> 200 MB). Browser RAM limits may affect WASM transcoding.'
-          : null;
-
-      newItems.push({
-        id: createItemId(),
-        file,
-        name: file.name,
-        size: file.size,
-        category,
-        sourceFormat,
-        targetFormat,
-        settings: getDefaultSettings(),
-        status: 'idle',
-        progress: 0,
-        outputBlob: null,
-        outputUrl: null,
-        outputSize: null,
-        durationMs: null,
-        errorMessage: null,
-        warningMessage,
-        thumbnailUrl,
-      });
-    }
-
-    if (newItems.length > 0) {
-      setItems((prev) => [...prev, ...newItems]);
-    }
-
-    return {
-      addedCount: newItems.length,
-      rejectedNames,
-    };
-  }, []);
+      return {
+        addedCount: newItems.length,
+        rejectedNames,
+      };
+    },
+    [],
+  );
 
   const addUrl = useCallback(
-    async (rawUrl: string): Promise<void> => {
+    async (rawUrl: string, presetOverride?: PresetId): Promise<void> => {
       const file = await fetchMediaFromUrl(rawUrl);
-      const result = addFiles([file]);
+      const result = addFiles([file], presetOverride);
       if (result.addedCount === 0) {
         throw new Error(
           `Unsupported media format for "${file.name}". Please link directly to a video, audio, or image file.`,

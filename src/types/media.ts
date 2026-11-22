@@ -89,6 +89,7 @@ export interface PresetDefinition {
   id: PresetId;
   label: string;
   shortLabel: string;
+  targetBadge: string;
   description: string;
   compatibleCategories: MediaCategory[];
   targetFormat: SupportedFormat;

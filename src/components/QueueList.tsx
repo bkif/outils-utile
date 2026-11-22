@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import {
   Archive,
+  ArrowRight,
   CheckCheck,
+  Cpu,
   Layers,
   Loader2,
   Play,
+  SlidersHorizontal,
   Trash2,
+  Upload,
+  XCircle,
 } from 'lucide-react';
 import {
   AUDIO_FORMATS,
@@ -28,7 +33,11 @@ interface QueueListProps {
   onCancelItem: (id: string) => void;
   onRemoveItem: (id: string) => void;
   onClearCompleted: () => void;
+  onClearAll: () => void;
 }
+
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0c0e]';
 
 export function QueueList({
   items,
@@ -41,6 +50,7 @@ export function QueueList({
   onCancelItem,
   onRemoveItem,
   onClearCompleted,
+  onClearAll,
 }: QueueListProps) {
   const [globalTarget, setGlobalTarget] = useState<string>('');
   const [isZipping, setIsZipping] = useState(false);
@@ -74,27 +84,28 @@ export function QueueList({
   };
 
   return (
-    <section aria-label="Conversion queue" className="space-y-3">
+    <section aria-label="Processing rack" className="space-y-3">
       {/* Batch Action Toolbar */}
-      <div className="flex flex-col gap-3 rounded-lg border border-[#262B36] bg-[#12151B] p-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="studio-panel flex flex-col gap-3 rounded-lg p-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[#9CA3AF]" aria-hidden="true" />
-            <h2 className="font-mono text-xs font-semibold uppercase tracking-wider text-[#F3F4F6]">
-              Queue
+            <Layers className="h-4 w-4 text-[#9ca3af]" aria-hidden="true" />
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-wider text-[#f3f4f6]">
+              Processing Rack
             </h2>
-            <span className="rounded border border-[#262B36] bg-[#0B0D10] px-2 py-0.5 font-mono text-xs tabular-nums text-[#9CA3AF]">
+            <span className="rounded border border-white/12 bg-[#0b0c0e] px-2 py-0.5 font-mono text-xs tabular-nums text-[#d1d5db]">
               {items.length}
             </span>
           </div>
 
           {items.length > 0 && (
             <div
-              className="flex items-center gap-2 font-mono text-xs tabular-nums text-[#9CA3AF]"
+              role="status"
               aria-live="polite"
+              className="flex items-center gap-2 font-mono text-xs tabular-nums text-[#9ca3af]"
             >
-              <span className="text-[#10B981]">{completedCount} done</span>
-              <span aria-hidden="true">•</span>
+              <span className="text-[#10b981]">{completedCount} done</span>
+              <span aria-hidden="true">·</span>
               <span>{convertibleCount} ready</span>
             </div>
           )}
@@ -111,7 +122,7 @@ export function QueueList({
                 value={globalTarget}
                 disabled={isProcessing}
                 onChange={(e) => handleGlobalFormatSelect(e.target.value)}
-                className="w-full rounded-md border border-[#262B36] bg-[#191D26] px-2.5 py-1.5 font-mono text-xs text-[#F3F4F6] transition-colors hover:border-[#3A4252] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className={`w-full rounded-md border border-white/14 bg-[#181b20] px-2.5 py-1.5 font-mono text-xs text-[#f3f4f6] transition-colors hover:border-white/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${FOCUS_RING}`}
               >
                 <option value="">Set compatible format...</option>
                 <optgroup label="Video">
@@ -137,15 +148,26 @@ export function QueueList({
                 </optgroup>
               </select>
 
+              {completedCount > 0 && (
+                <button
+                  type="button"
+                  id="clear-completed-button"
+                  onClick={onClearCompleted}
+                  className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-white/14 bg-[#181b20] px-3 py-1.5 text-xs font-medium text-[#d1d5db] transition-colors hover:border-white/25 hover:text-[#f3f4f6] sm:w-auto ${FOCUS_RING}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Clear Done</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                id="clear-completed-button"
-                disabled={completedCount === 0}
-                onClick={onClearCompleted}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#262B36] bg-[#191D26] px-3 py-1.5 text-xs font-medium text-[#9CA3AF] transition-colors hover:border-[#3A4252] hover:text-[#F3F4F6] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                id="clear-queue-button"
+                onClick={onClearAll}
+                className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-white/14 bg-[#181b20] px-3 py-1.5 text-xs font-medium text-[#9ca3af] transition-colors hover:border-[#ef4444]/40 hover:text-[#fca5a5] sm:w-auto ${FOCUS_RING}`}
               >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Clear Completed</span>
+                <XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Clear Queue</span>
               </button>
 
               <button
@@ -153,7 +175,7 @@ export function QueueList({
                 id="download-zip-button"
                 disabled={completedCount === 0 || isZipping}
                 onClick={handleDownloadZip}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#10B981]/40 bg-[#10B981]/15 px-3 py-1.5 text-xs font-medium text-[#10B981] transition-colors hover:bg-[#10B981]/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#10b981]/40 bg-[#10b981]/15 px-3 py-1.5 text-xs font-medium text-[#34d399] transition-colors hover:bg-[#10b981]/25 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto ${FOCUS_RING}`}
               >
                 {isZipping ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -168,17 +190,17 @@ export function QueueList({
                 id="convert-all-button"
                 disabled={convertibleCount === 0 || isProcessing}
                 onClick={onConvertAll}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#F59E0B]/50 bg-[#F59E0B] px-4 py-1.5 text-xs font-semibold text-[#0B0D10] transition-colors hover:bg-[#FBBF24] active:bg-[#D97706] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                className={`inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-[#f59e0b]/60 bg-[#f59e0b] px-4 py-1.5 text-xs font-semibold text-[#0b0c0e] transition-colors hover:bg-[#fbbf24] active:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto ${FOCUS_RING}`}
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    <span>Converting...</span>
+                    <span>Processing...</span>
                   </>
                 ) : completedCount > 0 && convertibleCount === 0 ? (
                   <>
                     <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
-                    <span>All Converted</span>
+                    <span>All Done</span>
                   </>
                 ) : (
                   <>
@@ -193,20 +215,87 @@ export function QueueList({
       </div>
 
       {zipError && (
-        <p role="alert" className="font-mono text-xs text-[#FCA5A5]">
+        <p role="alert" className="font-mono text-xs text-[#fca5a5]">
           {zipError}
         </p>
       )}
 
-      {/* Queue Items */}
+      {/* Queue Items or Workstation Empty-State Guide */}
       {items.length === 0 ? (
-        <div className="rounded-lg border border-[#262B36] bg-[#12151B]/50 px-6 py-10 text-center">
-          <p className="font-mono text-xs uppercase tracking-wider text-[#9CA3AF]">
-            Queue Rack Empty
-          </p>
-          <p className="mt-1.5 text-xs text-[#6B7280]">
-            Add local files or a CORS-enabled media URL above to configure formats and begin processing.
-          </p>
+        <div className="studio-panel rounded-lg p-6 sm:p-7">
+          <div className="mb-5 flex items-center justify-between gap-2 border-b border-white/8 pb-3.5">
+            <div>
+              <h3 className="text-sm font-semibold text-[#f3f4f6]">
+                Workstation Ready
+              </h3>
+              <p className="mt-0.5 text-xs text-[#9ca3af]">
+                Stage media files on the left to configure codecs, presets, and batch exports.
+              </p>
+            </div>
+            <span className="hidden rounded border border-white/10 bg-[#181b20] px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-[#9ca3af] sm:inline-block">
+              Standby
+            </span>
+          </div>
+
+          <ol className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <li className="rounded-md border border-white/8 bg-[#181b20]/70 p-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#f59e0b]/40 bg-[#f59e0b]/15 text-[#fbbf24]">
+                  <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+                <span className="font-mono text-[10px] font-semibold text-[#9ca3af]">
+                  STEP 01
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-[#e5e7eb]">
+                Drop or paste media
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-[#9ca3af]">
+                Drag files into the intake bay, press Ctrl+V, or fetch a CORS-enabled URL.
+              </p>
+            </li>
+
+            <li className="rounded-md border border-white/8 bg-[#181b20]/70 p-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded border border-white/14 bg-[#121418] text-[#e5e7eb]">
+                  <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+                <span className="font-mono text-[10px] font-semibold text-[#9ca3af]">
+                  STEP 02
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-[#e5e7eb]">
+                Pick preset or custom codec
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-[#9ca3af]">
+                Use one-click workflow presets or fine-tune CRF, resolution, bitrate &amp; FPS.
+              </p>
+            </li>
+
+            <li className="rounded-md border border-white/8 bg-[#181b20]/70 p-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#38bdf8]/40 bg-[#38bdf8]/15 text-[#38bdf8]">
+                  <Cpu className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+                <span className="font-mono text-[10px] font-semibold text-[#9ca3af]">
+                  STEP 03
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-[#e5e7eb]">
+                Transcode locally in RAM
+              </p>
+              <p className="mt-1 text-[11px] leading-relaxed text-[#9ca3af]">
+                Canvas &amp; FFmpeg.wasm process everything in-browser with instant ZIP export.
+              </p>
+            </li>
+          </ol>
+
+          <div className="mt-4 flex items-center gap-2 font-mono text-[11px] text-[#9ca3af]">
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[#fbbf24]" aria-hidden="true" />
+            <span>
+              Tip: Click any preset on the left while the rack is empty to jump straight into a filtered file picker.
+            </span>
+          </div>
         </div>
       ) : (
         <div className="space-y-2.5">
